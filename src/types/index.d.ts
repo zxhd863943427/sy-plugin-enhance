@@ -156,7 +156,7 @@ interface Window {
 
 
 
-interface BlockPath {
+interface IBreadcrumb {
   id: string;
   name: string;
   type: string;
@@ -166,6 +166,6 @@ interface BlockPath {
 
 interface backlinkData {
   dom: string;
-  blockPaths: BlockPath[];
+  blockPaths: IBreadcrumb[];
   expand: boolean;
 }[]
