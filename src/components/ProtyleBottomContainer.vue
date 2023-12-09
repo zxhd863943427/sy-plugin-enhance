@@ -47,6 +47,7 @@
                 :doc-backlink-fold-status-map="docBacklinkFoldStatusMap"
                 :doc-backlink="docBacklink"
                 :current-doc-id="currentDocId"
+                @switch-backlink-doc-block-fold-status="switchBacklinkDocBlockFoldStatus"
                 />
                 <div
                   ref="renderRef"
