@@ -41,29 +41,13 @@
                 :key="docBacklink.id"
                 class="backlinkDocBlock"
               >
-                <div class="backlinkDocBlockTitleLineSticky">
-                  <div
-                    class="backlinkDocBlockTitleLine"
-                    @click="switchBacklinkDocBlockFoldStatus(docBacklink)"
-                  >
-                    <div
-                      class="backlinkDocBlockFolder"
-                      :style="{
-                        transform: `rotateZ(${docBacklinkFoldStatusMap[docBacklink.id] ? '0' : '90'}deg)`,
-                      }"
-                    >
-                      <SyIcon
-                        name="iconPlay"
-                        size="10"
-                      />
-                    </div>
-                    <li
-                      class="b3-list-item b3-list-item--hide-action"
-                    >
-                      <span class="b3-list-item__text">{{ docBacklink.name }}</span>
-                    </li>
-                  </div>
-                </div>
+                <backlinkBlock
+                :backlink-data="(blockBackLinks[docBacklink.id])?.backlinks"
+                :display-map="displayMap"
+                :doc-backlink-fold-status-map="docBacklinkFoldStatusMap"
+                :doc-backlink="docBacklink"
+                :current-doc-id="currentDocId"
+                />
                 <div
                   ref="renderRef"
                   @mouseleave="onMouseLeave"
@@ -88,12 +72,14 @@ import { hideGutterOnTarget } from '@/utils/DOM';
 import { IProtyle, Protyle } from 'siyuan';
 import { computed, ref, watchEffect } from 'vue';
 import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
+import backlinkBlock from './backlink/backlinkBlock.vue'
 
 const props = defineProps({
   detail: Object,
   element: HTMLDivElement
 })
 const protyle = computed(() => props.detail.value.protyle as IProtyle)
+const currentDocId = protyle.value?.block?.id;
 const docBacklinks = ref([])
 const docBacklinkFoldStatusMap = ref({})
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
@@ -102,6 +88,7 @@ const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
 
 const blockBackLinks = ref({})
 const renderRef = ref([])
+const displayMap = ref({})
 watchEffect(() => {
   let flag
   props.element.addEventListener('scroll', () => {
@@ -122,7 +109,7 @@ const onMouseLeave = (event) => {
 
 const getData = () => {
   const plugin = usePlugin()
-  const currentDocId = protyle.value?.block?.id;
+
   if (!currentDocId) {
     return
   }
@@ -155,17 +142,7 @@ const getData = () => {
       backlinks.forEach((item, index) => {
         blockBackLinks.value[item.id] = results[index]
 
-        new Protyle(plugin.app, renderRef.value[index], {
-          blockId: currentDocId,
-          backlinkData: results[index].backlinks,
-          render: {
-              background: false,
-              title: false,
-              gutter: true,
-              scroll: false,
-              breadcrumb: false,
-          }
-        })
+        console.log(blockBackLinks.value)
       })
     })
   })
@@ -258,7 +235,7 @@ const switchBacklinkAreaFoldStatus = () => {
         // margin-bottom: 6px;
         // box-shadow: 2px 2px 4px var(--v-shadow-color);
 
-        .backlinkDocBlockTitleLineSticky {
+        ::deep.backlinkDocBlockTitleLineSticky {
           position: sticky;
           top: 0;
           z-index: 2;
