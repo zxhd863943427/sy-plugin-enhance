@@ -1,5 +1,6 @@
 <template>
-    <div class="backlinkDocBlockTitleLineSticky">
+    <div>
+        <div class="backlinkDocBlockTitleLineSticky">
         <div
         class="backlinkDocBlockTitleLine"
         @click="switchBacklinkDocBlockFoldStatus(docBacklink)"
@@ -20,6 +21,8 @@
         >
             <span class="b3-list-item__text">{{ docBacklink.name }}</span>
         </li>
+        </div>
+    </div>
         <ul>
             <div
             v-for="blockBacklinkData of backlinkData"
@@ -33,15 +36,12 @@
                 />
             </div>
         </ul>
-
-        <div>
-        </div>
-        </div>
     </div>
+    
 </template>
 <script setup lang="ts">
-import backlinkDocBlock from './backlinkDocBlock.vue';
-import { watch } from 'vue';
+import backlinkDocBlock from '@/components/backlink/backlinkDocBlock.vue';
+import SyIcon from '@/components/SiyuanTheme/SyIcon.vue'
 const props = defineProps({
   backlinkData: Object,
   displayMap: Object,
@@ -67,6 +67,7 @@ const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
     width: 100%;
     align-items: center;
     cursor: pointer;
+    display: flex;
     position: relative;
     background: var(--v-backlink-area-bg-color);
     // border-top-right-radius: var(--v-backlink-area-border-radius);
