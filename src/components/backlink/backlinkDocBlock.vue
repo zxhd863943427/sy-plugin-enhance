@@ -1,5 +1,5 @@
 <template>
-  <div :class="displayMap[blockID] === 'display' ? '': ''">
+  <div :class="filterSuccess ? '': 'fn__none'">
     <div
         ref="renderRef"
         @mouseleave="onMouseLeave"
@@ -44,6 +44,7 @@ const renderRef = ref()
 const preRenderRef = ref()
 const preBreadcrumb = ref()
 let blockID = ref()
+const filterSuccess = ref(true)
 let render = false
 const onMouseLeave = (event) => {
   hideGutterOnTarget(event.target)
@@ -283,11 +284,19 @@ function filterByString(node, filterList, parentNodeList) {
 }
 
 const checkAndFilter = (parentData, filterList)=>{
+  console.log("start Check")
   if (!parentData || !filterList){
-    return
+    return true
   }
-  let nodeList = renderRef.value.querySelectorAll('.protyle-wysiwyg.protyle-wysiwyg--attr > div[data-node-id]')
-  checkAllSubContainerBlock([...nodeList], filterList, parentData)
+  let nodeList
+  if (render){
+    nodeList = renderRef.value.querySelectorAll('.protyle-wysiwyg.protyle-wysiwyg--attr > div[data-node-id]')
+  }
+  else{
+    nodeList = renderRef.value.querySelectorAll('.protyle-wysiwyg.protyle-wysiwyg--attr > div > div[data-node-id]')
+  }
+
+  return checkAllSubContainerBlock([...nodeList], filterList, parentData)
 }
 
 
@@ -298,7 +307,7 @@ onMounted(() => {
   for (let node of unFoldNodeList){
     node.setAttribute('fold','1')
   }
-  checkAndFilter(props.parentData,props.filterList)
+  filterSuccess.value = checkAndFilter(props.parentData,props.filterList)
 })
 
 </script>
