@@ -42,6 +42,7 @@ const renderRef = ref()
 const preRenderRef = ref()
 const preBreadcrumb = ref()
 let blockID = ref()
+let render = false
 const onMouseLeave = (event) => {
   hideGutterOnTarget(event.target)
 }
@@ -52,6 +53,10 @@ console.log(111111)
 blockID.value = blockPaths[length-1].id
 console.log(props.blockBacklinkData)
 const renderProtyle = ()=>{
+  if (render){
+    return
+  }
+  console.log("render")
   new Protyle(
     plugin.app,
     renderRef.value,
@@ -67,7 +72,8 @@ const renderProtyle = ()=>{
       }
     }
   );
-  ((renderRef.value as HTMLElement).querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr div.protyle-breadcrumb__item[contenteditable="false"]') as HTMLElement).click()
+  ((renderRef.value as HTMLElement).querySelector('.protyle-wysiwyg.protyle-wysiwyg--attr div.protyle-breadcrumb__item[contenteditable="false"]') as HTMLElement)?.click()
+  render = true
 }
 
 const getIconByType = (type: string, sub?: string) => {
