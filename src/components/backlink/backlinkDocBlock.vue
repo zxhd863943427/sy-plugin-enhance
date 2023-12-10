@@ -33,6 +33,8 @@ import { Protyle } from 'siyuan';
 import { usePlugin } from '@/main';
 import { ref, onMounted } from 'vue';
 const props = defineProps({
+  parentData:Array<any>,
+  filterList:Array<Object>,
   blockBacklinkData: Object,
   displayMap: Object,
   docBacklinkFoldStatus:Boolean,
@@ -165,6 +167,129 @@ const genBreadcrumb = (blockPaths: IBreadcrumb[], renderFirst = false) => {
     return `<div contenteditable="false" style="margin-bottom: 8px" class="protyle-breadcrumb__bar protyle-breadcrumb__bar--nowrap">${html}</div>`;
 };
 
+const checkNodeListWithFilterInclude = (nodeList,filterList)=>{
+    let htmlStr = ''
+    let ret = true
+    for (let node of nodeList) {
+        htmlStr += node.innerHTML
+    }
+    for (let filter of filterList) {
+        if (filter.include) {
+            if (htmlStr.includes(filter.key)) {
+                continue
+            } else {
+                ret = false
+                return ret
+            }
+        }
+    }
+    return ret
+}
+
+const checkNodeListWithFilterExclude = (nodeList,filterList)=>{
+    let htmlStr = ''
+    let ret = false
+    for (let node of nodeList) {
+        htmlStr += node.innerHTML
+    }
+    for (let filter of filterList) {
+        if (!filter.include) {
+            if (htmlStr.includes(filter.key)) {
+                ret = true
+                return ret
+            }
+        }
+    }
+    return ret
+}
+
+const hiddenNode = (node)=>{
+    node.classList.add("fn__none")
+}
+
+const isLeftBlock = (node)=>{
+    let nodeType = node.dataset.type
+    switch (nodeType) {
+    case 'NodeHeading':
+    case 'NodeParagraph':
+    case 'NodeTable':
+    case 'NodeMathBlock':
+    case 'NodeCodeBlock':
+    case 'NodeHTMLBlock':
+        return true
+    default:
+        return false
+    }
+}
+
+const exactSubNode = (node)=>{
+    return [...node.querySelectorAll(":scope > div[data-node-id]")]
+}
+
+const checkAllSubContainerBlock = (subContainerBlockList,filterList,parentNodeList)=>{
+    let ret = false
+    if (subContainerBlockList.length === 0) {
+        ret = true
+    }
+    for (let subContainerBlock of subContainerBlockList) {
+        if (filterByString(subContainerBlock, filterList, parentNodeList)) {
+            ret = true
+        }
+    }
+    return ret
+}
+
+function filterByString(node, filterList, parentNodeList) {
+    let road = [...parentNodeList]
+    console.log(node.innerText)
+    if (!checkNodeListWithFilterInclude([...parentNodeList, node], filterList)) {
+        hiddenNode(node)
+        return false
+    }
+    if ((isLeftBlock(node) && checkNodeListWithFilterExclude([...parentNodeList, node], filterList)) ||
+       (!isLeftBlock(node) && checkNodeListWithFilterExclude([...parentNodeList], filterList))) {
+        hiddenNode(node)
+        return false
+    }
+
+    if (isLeftBlock(node) || 
+        (!checkNodeListWithFilterExclude([...parentNodeList, node], filterList)) &&
+        checkNodeListWithFilterInclude([...parentNodeList], filterList)) {
+        return true
+    }
+    let subNodeList = exactSubNode(node)
+    let subContainerBlockList = []
+    let subLeftBlockList = []
+    let originRoad = [...road]
+    for (let subNode of subNodeList) {
+        if (isLeftBlock(subNode)) {
+            road.push(subNode)
+            subLeftBlockList.push(subNode)
+        } else {
+            subContainerBlockList.push(subNode)
+        }
+    }
+    if (subContainerBlockList.length === 0){
+        if (!checkAllSubContainerBlock(subLeftBlockList, filterList, road)) {
+            hiddenNode(node)
+            return false
+        }
+    }
+    if (!checkAllSubContainerBlock(subContainerBlockList, filterList, road)) {
+        hiddenNode(node)
+        return false
+    }
+    return true
+}
+
+const checkAndFilter = (parentData, filterList)=>{
+  if (!parentData || !filterList){
+    return
+  }
+  let nodeList = renderRef.value.querySelectorAll('.protyle-wysiwyg.protyle-wysiwyg--attr > div[data-node-id]')
+  checkAllSubContainerBlock([...nodeList], filterList, parentData)
+}
+
 
 onMounted(() => {
   preBreadcrumb.value.innerHTML = genBreadcrumb(props.blockBacklinkData.blockPaths)
@@ -173,6 +298,7 @@ onMounted(() => {
   for (let node of unFoldNodeList){
     node.setAttribute('fold','1')
   }
+  checkAndFilter(props.parentData,props.filterList)
 })
 
 </script>
