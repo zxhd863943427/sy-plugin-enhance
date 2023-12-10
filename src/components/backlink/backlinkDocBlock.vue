@@ -169,7 +169,7 @@ const genBreadcrumb = (blockPaths: IBreadcrumb[], renderFirst = false) => {
 onMounted(() => {
   preBreadcrumb.value.innerHTML = genBreadcrumb(props.blockBacklinkData.blockPaths)
   preRenderRef.value.innerHTML = props.blockBacklinkData.dom
-  let unFoldNodeList = (preRenderRef.value as HTMLElement).querySelectorAll(`:scope>[data-type="NodeListItem"]>[data-type="NodeList"]>[fold='0']`)
+  let unFoldNodeList = (preRenderRef.value as HTMLElement).querySelectorAll(`[data-type="NodeListItem"]>[data-type="NodeList"]>[fold='0']`)
   for (let node of unFoldNodeList){
     node.setAttribute('fold','1')
   }
