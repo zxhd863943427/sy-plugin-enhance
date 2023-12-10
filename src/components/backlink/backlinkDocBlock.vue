@@ -271,7 +271,7 @@ function filterByString(node, filterList, parentNodeList) {
         }
     }
     if (subContainerBlockList.length === 0){
-        if (!checkAllSubContainerBlock(subLeftBlockList, filterList, road)) {
+        if (!checkAllSubContainerBlock(subLeftBlockList, filterList, originRoad)) {
             hiddenNode(node)
             return false
         }
