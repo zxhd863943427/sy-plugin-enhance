@@ -151,6 +151,37 @@ const getIconByType = (type: string, sub?: string) => {
     return iconName;
 };
 
+// 传递型折叠处理
+const foldPassiveType = (expand: boolean, element: HTMLElement | DocumentFragment) => {
+    if (element.firstElementChild.classList.contains("li")) {
+        if (expand) {
+            element.querySelectorAll(".li .li").forEach(item => {
+                if (item.childElementCount > 3) {
+                    item.setAttribute("fold", "1");
+                }
+            });
+        } else {
+            element.firstElementChild.setAttribute("fold", "1");
+        }
+    } else if (element.firstElementChild.getAttribute("data-type") === "NodeHeading") {
+        Array.from(element.children).forEach((item, index) => {
+            if ((expand && index > 2) || (!expand && index > 1)) {
+                if ((expand && index === 3) || (!expand && index === 2)) {
+                    item.insertAdjacentHTML("beforebegin", '<div style="max-width: 100%;justify-content: center;" contenteditable="false" class="protyle-breadcrumb__item"><svg><use xlink:href="#iconMore"></use></svg></div>');
+                }
+                item.classList.add("fn__none");
+            }
+        });
+    }
+};
+
+const setBacklinkFold = (html: string, expand: boolean) => {
+    const tempDom = document.createElement("template");
+    tempDom.innerHTML = html;
+    foldPassiveType(expand, tempDom.content);
+    return tempDom.innerHTML;
+};
+
 const genBreadcrumb = (blockPaths: IBreadcrumb[], renderFirst = false) => {
     let html = "";
     blockPaths.forEach((item, index) => {
@@ -302,11 +333,7 @@ const checkAndFilter = (parentData, filterList)=>{
 
 onMounted(() => {
   preBreadcrumb.value.innerHTML = genBreadcrumb(props.blockBacklinkData.blockPaths)
-  preRenderRef.value.innerHTML = props.blockBacklinkData.dom
-  let unFoldNodeList = (preRenderRef.value as HTMLElement).querySelectorAll(`[data-type="NodeListItem"]>[data-type="NodeList"]>[fold='0']`)
-  for (let node of unFoldNodeList){
-    node.setAttribute('fold','1')
-  }
+  preRenderRef.value.innerHTML = setBacklinkFold(props.blockBacklinkData.dom, props.blockBacklinkData.expand)
   filterSuccess.value = checkAndFilter(props.parentData,props.filterList)
 })
 
