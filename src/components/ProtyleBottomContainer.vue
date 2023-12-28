@@ -1,7 +1,7 @@
 <template>
   <div class="ProtyleBottomContainer">
     <div class="enhanceToBottomIndicator" :data-node-id="protyle.block.id"></div>
-    <div class="backlinkArea">
+    <div class="backlinkArea" v-if="enableBottomBacklink">
       <div
         class="backlinkAreaTitleLine"
       >
@@ -25,6 +25,7 @@
         </h2>
         <div class="opts">
           <SyIcon
+            v-if="enableBacklinkFilter"
             @click="switchBacklinkFilterPanelShownStatus"
             name="iconFilter"
             size="14"
@@ -33,6 +34,7 @@
 
       </div>
       <div
+        v-if="enableBacklinkFilter"
         class="backlinkFilterContainer"
         :style="{
           display: backlinkFilterPanelShownStatus ? 'flex' : 'none',
@@ -151,7 +153,12 @@
                     <li
                       class="b3-list-item b3-list-item--hide-action"
                     >
-                      <span class="b3-list-item__text">{{ docBacklink.name }}</span>
+                      <span
+                        class="b3-list-item__text backlinkDocTitle"
+                        @click="jumpToDoc($event, docBacklink.id)"
+                      >
+                        {{ docBacklink.name }}
+                      </span>
                     </li>
                   </div>
                 </div>
@@ -188,6 +195,8 @@ chainHasRefNode,
 import {
   recursionTree,
 } from '@/utils';
+import { useSettings } from '@/logic';
+import { openDocById } from '@/utils/Note';
 
 
 interface Node {
@@ -207,6 +216,11 @@ const docBacklinks = ref([])
 
 const useV = ref(false);
 
+const settings = useSettings()
+
+const enableBottomBacklink = computed(() => settings.value.enableBottomBacklink)
+const enableBacklinkFilter = computed(() => settings.value.enableBacklinkFilter)
+
 // #region 基础数据处理
 
 
@@ -214,8 +228,29 @@ const useV = ref(false);
 
 const blockBackLinks = ref({})
 const renderRef = ref([])
+const backlinkListDomRef = ref<HTMLElement>(null)
+const dealedDomList = ref<Array<HTMLElement>>([])
+
+  // IMP 保存相关选择
+const backlinkDocTreeStruct = ref([])
+const backlinkFlatTree = ref([])
+const backlinkTreePathChains = ref([])
+
+const docBacklinkFoldStatusMap = ref({})
+
+const backlinkBlockRefNodes = ref<Node[]>([])
+
 const getData = async () => {
   const plugin = usePlugin()
+
+  // IMP 需清空相关数据
+  docBacklinks.value = []
+  backlinkDocTreeStruct.value = []
+  backlinkFlatTree.value = []
+  backlinkTreePathChains.value = []
+  docBacklinkFoldStatusMap.value = {}
+  backlinkBlockRefNodes.value = []
+
   const currentDocId = protyle.value?.block?.id;
   if (!currentDocId) {
     return
@@ -277,9 +312,6 @@ watchEffect(() => {
 
 // #region 反链结构数据
 
-const backlinkDocTreeStruct = ref([])
-const backlinkFlatTree = ref([])
-const backlinkTreePathChains = ref([])
 
 const getBlockRefsInDoc = async (ids: string[]) => {
   let sqlStmt = `
@@ -289,6 +321,7 @@ const getBlockRefsInDoc = async (ids: string[]) => {
     from refs where block_id in (
       ${ids.map(i => `'${i}'`).join(', ')}
     ) group by def_block_id
+    limit ${settings.value.sqlLimit}
   `
   return sql(sqlStmt)
 }
@@ -330,6 +363,7 @@ const getTreeStruct = async () => {
         JOIN parentList ct ON c.parent_id= ct.id
     )
     select * from parentList
+    limit ${settings.value.sqlLimit}
   `)
   sqlResult.forEach((tempNode) => {
     const { id } = tempNode
@@ -414,7 +448,7 @@ const getTreeStruct = async () => {
 
 // #region 折叠控制相关
 
-const docBacklinkFoldStatusMap = ref({})
+
 const switchBacklinkDocBlockFoldStatus = (docBacklink) => {
   docBacklinkFoldStatusMap.value[docBacklink.id] = !docBacklinkFoldStatusMap.value[docBacklink.id]
 }
@@ -441,7 +475,7 @@ const properties = ref<{
     origin: Node;
   }
 }>({})
-const backlinkBlockRefNodes = ref<Node[]>([])
+
 
 
 const notSelectedRefs = computed<Array<Node>>(() => {
@@ -525,8 +559,7 @@ const validBacklinkTreePathChain = computed(() => {
 
 // #region 根据树结构处理页面元素
 
-const backlinkListDomRef = ref<HTMLElement>(null)
-const dealedDomList = ref<Array<HTMLElement>>([])
+
 const storeDom = (dom) => {
   dealedDomList.value.push(dom)
 }
@@ -669,6 +702,13 @@ const linkNumMap = computed(() => {
   return map
 })
 
+const jumpToDoc = (event: MouseEvent, docId) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  openDocById(docId)
+}
+
 </script>
 
 <style>
@@ -795,6 +835,11 @@ const linkNumMap = computed(() => {
           &:hover .backlinkDocBlockFolder,
           .backlinkDocBlockFolder:hover {
             visibility: visible;
+          }
+
+          .backlinkDocTitle:hover {
+            color: var(--sky-blue);
+            text-decoration: underline;
           }
         }
 
